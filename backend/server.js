@@ -4,55 +4,40 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
+
+// Enable CORS for all domains
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/campus_vault";
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("MongoDB Connected Successfully"))
-    .catch(err => console.log("MongoDB Connection Error: ", err));
-
-// Database Schema for Study Materials
-const NoteSchema = new mongoose.Schema({
-    title: String,
-    subject: String,
-    fileUrl: String,
-    uploadedBy: String,
-    createdAt: { type: Date, default: Date.now }
-});
-const Note = mongoose.model('Note', NoteSchema);
-
-// API Route 1: Get All Notes
-app.get('/api/notes', async (req, res) => {
-    try {
-        const notes = await Note.find().sort({ createdAt: -1 });
-        res.json(notes);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch notes" });
-    }
+// Root Route check karne ke liye ki server live hai ya nahi
+app.get('/', (req, res) => {
+    res.send("Campus Vault Backend Server Running!");
 });
 
-// API Route 2: AI Assistant Endpoint (Using Hugging Face / Open-source LLM logic)
-app.post('/api/ai-assistant', async (req, res) => {
+// Mock Notes Route (Bina DB dependency ke instant testing ke liye)
+app.get('/api/notes', (req, res) => {
+    res.json([
+        {
+            title: "Process Scheduling Algorithms PDF",
+            subject: "Operating Systems",
+            uploadedBy: "CSE Department",
+            fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        },
+        {
+            title: "SQL Queries Cheat Sheet",
+            subject: "DBMS",
+            uploadedBy: "Rahul Sir",
+            fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        }
+    ]);
+});
+
+// AI Assistant Route
+app.post('/api/ai-assistant', (req, res) => {
     const { prompt } = req.body;
-
-    if (!prompt) {
-        return res.status(400).json({ error: "Prompt is required" });
-    }
-
-    try {
-        // AI Logic integration (Can connect to OpenRouter or HuggingFace free endpoints)
-        const simplifiedAnswer = `🤖 **AI Simplified Analysis:**\n\n` + 
-            `Aapke question ("${prompt}") ka simplified explanation:\n` +
-            `1. **Key Concept:** Clear and core points extracted.\n` +
-            `2. **Exam Tip:** Keep definitions short and clear in technical exams.\n` +
-            `3. **Summary:** Is concept ka main goal system efficiency ko optimize karna hai.`;
-
-        res.json({ result: simplifiedAnswer });
-    } catch (err) {
-        res.status(500).json({ error: "AI service Error" });
-    }
+    res.json({
+        result: `🤖 **AI Response:**\n\nAapke question ("${prompt || 'No question'}") ka key answer yeh hai ki Operating Systems mein Process Scheduling algorithms CPU execution efficiency ko max level par optimize karte hain.`
+    });
 });
 
 const PORT = process.env.PORT || 5000;
