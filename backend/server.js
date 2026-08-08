@@ -46,10 +46,9 @@ app.post('/api/ai-assistant', async (req, res) => {
 
     const GROK_API_KEY = process.env.GROK_API_KEY;
 
-    // Fallback response if API key is not yet set in Render
     if (!GROK_API_KEY) {
         return res.json({
-            result: `🤖 **[System Mode]**\n\nAapka Question: "${prompt}"\n\n*(Note: Grok API Key abhi Render Environment variables mein add nahi hui hai. Render settings mein GROK_API_KEY set karein real live Grok response ke liye!)*`
+            result: `🤖 **[System Mode]**\n\nAapka Question: "${prompt}"\n\n*(Note: Grok API Key Render me set nahi hai.)*`
         });
     }
 
@@ -61,7 +60,7 @@ app.post('/api/ai-assistant', async (req, res) => {
                 "Authorization": `Bearer ${GROK_API_KEY}`
             },
             body: JSON.stringify({
-                model: "grok-beta",
+                model: "grok-2-latest", // Updated to official model name
                 messages: [
                     { role: "system", content: "You are a helpful academic AI tutor for Computer Science students at BM Group of Institutions (BMGI)." },
                     { role: "user", content: prompt }
