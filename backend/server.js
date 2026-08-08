@@ -9,10 +9,10 @@ app.use(express.json());
 
 // Root test route
 app.get('/', (req, res) => {
-    res.send("BMGI Academic Vault Backend Running!");
+    res.send("BMGI Academic Vault & Groq AI Backend Running!");
 });
 
-// Semester 5 Sample Notes Route
+// Semester 5 Notes Route
 app.get('/api/notes', (req, res) => {
     res.json([
         {
@@ -36,7 +36,7 @@ app.get('/api/notes', (req, res) => {
     ]);
 });
 
-// 100% Reliable AI Assistant Endpoint
+// Super-fast Groq AI Assistant Endpoint
 app.post('/api/ai-assistant', async (req, res) => {
     const { prompt } = req.body;
 
@@ -44,32 +44,44 @@ app.post('/api/ai-assistant', async (req, res) => {
         return res.status(400).json({ error: "Prompt is required" });
     }
 
-    try {
-        // High quality free AI endpoint (No API Key Required & Zero Cost)
-        const systemPrompt = `You are a helpful academic AI tutor for Computer Science (Semester 5) students at BM Group of Institutions (BMGI). Provide a clean, formatted response to the following query:\n\nUser Question: ${prompt}`;
-        
-        const aiResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(systemPrompt)}?model=openai&cache=false`);
-        
-        if (!aiResponse.ok) {
-            throw new Error(`HTTP Error ${aiResponse.status}`);
-        }
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-        const textResult = await aiResponse.text();
-
-        // Clean response if any unexpected JSON string comes
-        if (textResult.startsWith('{') && textResult.includes('"error"')) {
-            return res.json({ 
-                result: `Hello! I am your BMGI Academic Assistant.\n\nQuery: "${prompt}"\n\nTo fetch real-time AI responses, please ensure your AI API credits are active. Currently operating in fallback student helper mode!` 
-            });
-        }
-
-        res.json({ result: textResult });
-
-    } catch (err) {
-        console.error("AI API Error:", err);
-        res.json({ 
-            result: `BMGI Academic Helper:\n\nCould not process query right now. Please try asking again in a few seconds!` 
+    if (!GROQ_API_KEY) {
+        return res.json({
+            result: `🤖 **[System Mode]**\n\nAapka Question: "${prompt}"\n\n*(Note: Groq API Key Render par set nahi hai.)*`
         });
+    }
+
+    try {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${GROQ_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama-3.1-8b-instant",
+                messages: [
+                    { 
+                        role: "system", 
+                        content: "You are an expert academic AI tutor for Computer Science (Semester 5) students at BM Group of Institutions (BMGI). Provide clear, concise, and structured answers." 
+                    },
+                    { role: "user", content: prompt }
+                ],
+                temperature: 0.7
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            res.json({ result: data.choices[0].message.content });
+        } else {
+            res.json({ result: "Groq API Error: " + (data.error?.message || JSON.stringify(data)) });
+        }
+    } catch (err) {
+        console.error("Groq API Call Error:", err);
+        res.status(500).json({ result: "Server error while connecting to AI assistant." });
     }
 });
 
