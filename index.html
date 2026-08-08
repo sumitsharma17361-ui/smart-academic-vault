@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BM Group of Institutions - Enterprise ERP Portal</title>
+    <title>BMGI Vault - Enterprise ERP Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -12,288 +12,245 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { 
-            --bg-body: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 40%, #f0f9ff 100%);
-            --primary: #0284c7; 
-            --primary-hover: #0369a1;
+            --bg-body: #0b1120;
+            --card-bg: #111827;
+            --card-inner: #1f2937;
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --accent-purple: #6366f1;
             --success: #10b981; 
             --danger: #ef4444; 
             --warning: #f59e0b; 
-            --glass-bg: rgba(255, 255, 255, 0.65);
-            --glass-bg-subtle: rgba(255, 255, 255, 0.45);
-            --glass-border: rgba(255, 255, 255, 0.8);
-            --glass-card-border: rgba(186, 230, 254, 0.5);
-            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
-            --shadow-hover: 0 12px 24px -4px rgba(2, 132, 199, 0.15);
-            --text-main: #0f172a; 
-            --text-muted: #475569; 
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-card: #2d3748;
+            --text-main: #f3f4f6; 
+            --text-muted: #9ca3af; 
             --radius: 16px;
         }
+
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        
         body { 
-            background: var(--bg-body); 
-            background-attachment: fixed;
+            background-color: var(--bg-body); 
             color: var(--text-main); 
             min-height: 100vh; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             padding: 16px; 
-            position: relative; 
         }
 
-        /* Glassmorphism Containers */
+        /* Vault App Container */
         .app-container { 
             width: 100%; 
             max-width: 480px; 
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 28px; 
-            box-shadow: var(--shadow-glass); 
-            border: 1px solid var(--glass-border); 
+            background: var(--card-bg);
+            border-radius: 24px; 
+            border: 1px solid var(--border-card); 
             overflow: hidden; 
-            animation: cardScaleUp 0.6s cubic-bezier(0.16,1,0.3,1); 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
         #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 420px; pointer-events: none; }
         .toast-card { 
             padding: 12px 16px; 
-            border-radius: 16px; 
+            border-radius: 12px; 
             font-size: 13px; 
             font-weight: 600; 
             text-align: center; 
-            box-shadow: var(--shadow-glass); 
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border); 
+            background: #1f2937;
+            color: #f3f4f6;
+            border: 1px solid var(--border-card); 
             display: flex; align-items: center; justify-content: center; gap: 10px; 
-            opacity: 0; transform: translateY(-16px) scale(0.96); 
-            transition: all 0.45s cubic-bezier(0.16,1,0.3,1); 
+            opacity: 0; transform: translateY(-16px); 
+            transition: all 0.3s ease; 
             pointer-events: auto; 
         }
-        .toast-card.show { opacity: 1; transform: translateY(0) scale(1); }
-        .toast-card.toast-success { background: rgba(240, 253, 244, 0.85); color: #166534; border-color: #bbf7d0; }
-        .toast-card.toast-error { background: rgba(254, 242, 242, 0.85); color: #991b1b; border-color: #fecaca; animation: shake 0.4s ease-in-out; }
-        
-        @keyframes shake { 0%,100% { transform:translateX(0); } 20%,60% { transform:translateX(-4px); } 40%,80% { transform:translateX(4px); } }
-        @keyframes cardScaleUp { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
-        @keyframes fadeInSlide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        .tab-content-active { animation: fadeInSlide 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .toast-card.show { opacity: 1; transform: translateY(0); }
+        .toast-card.toast-success { background: #064e3b; color: #a7f3d0; border-color: #059669; }
+        .toast-card.toast-error { background: #7f1d1d; color: #fecaca; border-color: #dc2626; }
 
-        /* Header */
+        /* Vault Header */
         .app-header { 
-            background: rgba(255, 255, 255, 0.4); 
-            backdrop-filter: blur(10px);
+            background: var(--card-bg); 
             padding: 18px 20px; 
-            border-bottom: 1px solid var(--glass-card-border); 
+            border-bottom: 1px solid var(--border-color); 
             display: flex; align-items: center; justify-content: space-between; 
         }
-        .app-header-title h1 { font-size: 16px; font-weight: 800; color: #0f172a; letter-spacing: -0.3px; }
-        .app-header-title p { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .app-header-title { display: flex; align-items: center; gap: 10px; }
+        .app-header-title h1 { font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+        .app-header-title p { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
         
-        .avatar-circle { 
-            width: 36px; height: 36px; border-radius: 50%; 
-            background: linear-gradient(135deg, #0284c7, #38bdf8); 
-            color: white; font-weight: 700; font-size: 12px; 
-            display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
-            border: 2px solid #ffffff; 
-            transition: all 0.3s; 
+        .badge-sem { 
+            background: rgba(79, 70, 229, 0.2); 
+            color: #818cf8; 
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
         }
 
-        .notice-banner { 
-            background: rgba(254, 243, 199, 0.7); 
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid rgba(253, 230, 138, 0.6); 
-            color: #92400e; font-size: 10px; padding: 6px 12px; font-weight: 600; 
-            display: flex; align-items: center; gap: 8px; 
-        }
-        .notice-marquee { overflow: hidden; white-space: nowrap; width: 100%; }
-        .notice-marquee p { display: inline-block; animation: marquee 16s linear infinite; }
-        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        .app-body { padding: 18px; }
 
-        .app-body { padding: 16px; }
-
-        /* Inputs & Selects Glass */
-        input, select { 
-            width: 100%; padding: 10px 14px; margin-bottom: 10px; 
-            background: rgba(255, 255, 255, 0.55); 
-            border: 1px solid var(--glass-card-border); 
-            border-radius: 12px; font-size: 11px; font-weight: 600; 
-            color: var(--text-main); outline: none; 
-            backdrop-filter: blur(10px);
-            transition: all 0.3s; 
-        }
-        select option { background: #ffffff; color: #0f172a; }
-        input::placeholder { color: #64748b; font-weight: 500; }
-        input:focus, select:focus { 
-            background: rgba(255, 255, 255, 0.85); 
-            border-color: var(--primary); 
-            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); 
-        }
-
-        .password-wrapper { position: relative; width: 100%; }
-        .password-wrapper input { padding-right: 36px; }
-        .eye-icon { position: absolute; right: 12px; top: 38%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); }
-
-        /* Buttons Glass */
-        .btn { 
-            width: 100%; padding: 10px 14px; border-radius: 12px; font-weight: 700; font-size: 11px; 
-            cursor: pointer; margin-top: 4px; transition: all 0.3s cubic-bezier(0.16,1,0.3,1); 
-            border: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
-        }
-        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-        .btn:active { transform: scale(0.97); }
-
-        .btn-primary { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
-        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-        .btn-accent { background: linear-gradient(135deg, #38bdf8, #0284c7); color: white; }
-        .btn-outline { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--glass-card-border); color: var(--text-main); }
-        .btn-outline:hover { background: rgba(255, 255, 255, 0.9); }
-        .btn-danger { background: rgba(254, 242, 242, 0.8); color: var(--danger); border: 1px solid #fecaca; }
-        .btn-sm { padding: 6px 12px; font-size: 10px; width: auto; margin: 0; }
-
-        .badge { padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 700; }
-        .badge-present { background: #d1fae5; color: #065f46; }
-        .badge-flagged { background: #fee2e2; color: #991b1b; }
-        .badge-active { background: #e0f2fe; color: #0369a1; }
-
-        /* Stats & Cards */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
-        .stat-card { 
-            background: var(--glass-bg-subtle); 
-            padding: 12px; border-radius: var(--radius); text-align: center; 
-            border: 1px solid var(--glass-card-border); 
-            backdrop-filter: blur(10px); transition: all 0.3s; 
-        }
-        .stat-card:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.7); }
-        .stat-card .value { font-size: 20px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
-        .stat-card .label { font-size: 9px; color: var(--text-muted); font-weight: 700; margin-top: 2px; text-transform: uppercase; }
-
-        .simulator-card { 
-            background: rgba(224, 242, 254, 0.6); 
-            border: 1px solid rgba(186, 230, 254, 0.8); 
-            border-radius: var(--radius); padding: 10px 14px; margin-bottom: 10px; 
-            font-size: 10px; color: #0369a1; display: flex; align-items: center; gap: 8px; 
-            backdrop-filter: blur(10px);
-        }
-
-        .quick-portals-card, .calendar-container, .admin-box, .tool-sub-card { 
-            background: var(--glass-bg-subtle); 
-            border: 1px solid var(--glass-card-border); 
-            border-radius: var(--radius); padding: 12px; margin: 10px 0; 
-            backdrop-filter: blur(12px); 
-        }
-
-        .portal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; }
-        .portal-btn { 
-            background: rgba(255, 255, 255, 0.6); 
-            border: 1px solid var(--glass-card-border); 
-            border-radius: 12px; padding: 8px 6px; text-align: center; 
-            font-size: 9px; font-weight: 700; color: var(--text-main); cursor: pointer; 
-            transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 4px; 
-        }
-        .portal-btn:hover { background: #ffffff; color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12); }
-
+        /* Tab Bar (Vault Navigation) */
         .tab-bar, .admin-nav { 
-            display: flex; background: rgba(224, 242, 254, 0.5); 
-            border-radius: 12px; padding: 3px; margin-bottom: 12px; 
-            border: 1px solid var(--glass-card-border); 
+            display: flex; 
+            background: #0f172a; 
+            border-radius: 12px; 
+            padding: 4px; 
+            margin-bottom: 16px; 
+            border: 1px solid var(--border-color); 
         }
         .tab-item, .admin-nav-item { 
-            flex: 1; padding: 7px 4px; text-align: center; font-size: 10px; font-weight: 700; 
-            cursor: pointer; color: var(--text-muted); border-radius: 9px; transition: all 0.3s; 
-            white-space: nowrap; 
+            flex: 1; 
+            padding: 10px 6px; 
+            text-align: center; 
+            font-size: 12px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            color: var(--text-muted); 
+            border-radius: 8px; 
+            transition: all 0.2s ease; 
         }
         .tab-item.active, .admin-nav-item.active { 
-            background: #ffffff; color: var(--primary); 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
+            background: var(--primary); 
+            color: #ffffff; 
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); 
         }
 
-        /* Dynamic Subject Checkbox Section Glass Style */
+        /* Vault Section Cards */
+        .admin-box { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-card); 
+            border-radius: var(--radius); 
+            padding: 16px; 
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Inputs & Controls (Dark Theme) */
+        input, select { 
+            width: 100%; 
+            padding: 12px 14px; 
+            margin-bottom: 12px; 
+            background: #1f2937; 
+            border: 1px solid #374151; 
+            border-radius: 10px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: #ffffff; 
+            outline: none; 
+            transition: all 0.2s; 
+        }
+        select option { background: #1f2937; color: #ffffff; }
+        input::placeholder { color: #6b7280; }
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25); 
+        }
+
+        /* Dynamic Subject Checkboxes (Dark Card Grid) */
         .subject-checkbox-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            max-height: 160px;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            max-height: 180px;
             overflow-y: auto;
-            padding: 6px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 12px;
-            border: 1px solid var(--glass-card-border);
+            padding: 8px;
+            background: #151d2a;
+            border-radius: 10px;
+            border: 1px solid #2d3748;
         }
         .subject-checkbox-container label {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
             cursor: pointer;
-            padding: 5px 8px;
-            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 10px;
+            background: #1f2937;
             border-radius: 8px;
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid #374151;
+            color: #e5e7eb;
             transition: all 0.2s;
         }
         .subject-checkbox-container label:hover { 
-            background: #ffffff; 
+            background: #374151; 
             border-color: var(--primary); 
-            color: var(--primary);
         }
-        .subject-checkbox-container label input[type="checkbox"] { width: auto; margin: 0; }
+        .subject-checkbox-container label input[type="checkbox"] { 
+            width: auto; 
+            margin: 0; 
+            accent-color: var(--primary);
+        }
         .subject-checkbox-container .select-all {
-            grid-column: span 2;
-            background: rgba(224, 242, 254, 0.8);
-            padding: 6px 10px;
+            background: rgba(79, 70, 229, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+            color: #a5b4fc;
             font-weight: 700;
-            border: 1px solid #bae6fd;
-            color: #0369a1;
         }
 
-        .calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; text-align: center; font-size: 9px; }
-        .cal-date { padding: 6px 2px; border-radius: 6px; font-weight: 600; background: rgba(255,255,255,0.5); border: 1px solid rgba(226, 232, 240, 0.5); }
-        .cal-p { background: #d1fae5; color: #047857; font-weight: 800; }
-        .cal-a { background: #fee2e2; color: #b91c1c; font-weight: 800; }
-        .cal-off { background: rgba(241, 245, 249, 0.6); color: #94a3b8; }
+        /* Action Buttons */
+        .btn { 
+            width: 100%; 
+            padding: 12px 14px; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            border: none; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: scale(0.98); }
 
-        .table-container { max-height: 240px; overflow-y: auto; border: 1px solid var(--glass-card-border); border-radius: 12px; background: rgba(255, 255, 255, 0.6); }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        th { background: rgba(224, 242, 254, 0.8); color: var(--text-muted); padding: 8px; text-align: left; border-bottom: 1px solid var(--glass-card-border); sticky: top; font-weight: 700; }
-        td { padding: 7px 8px; border-bottom: 1px solid rgba(241, 245, 249, 0.8); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: #1f2937; border: 1px solid #374151; color: #d1d5db; }
+        .btn-outline:hover { background: #374151; color: white; }
+        .btn-sm { padding: 8px 12px; font-size: 11px; width: auto; }
 
-        .svg-icon { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; vertical-align: middle; }
+        .svg-icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     </style>
 </head>
 <body>
     <div id="toast-container"><div id="toast" class="toast-card"><svg id="toast-icon" class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toast-msg">System Active</span></div></div>
 
     <div class="app-container">
+        <!-- Vault Header -->
         <div class="app-header">
             <div class="app-header-title">
-                <h1>BM Group of Institutions</h1>
-                <p>B.Tech CSE - 5th Semester (Room 203)</p>
+                <div>
+                    <h1>🎓 BMGI Vault</h1>
+                    <p>BM Group of Institutions</p>
+                </div>
             </div>
-            <div class="header-avatar-badge" id="headerAvatarBox" style="display:none;">
-                <div class="avatar-circle" id="userAvatarText">SS</div>
-            </div>
-        </div>
-
-        <div class="notice-banner" id="noticeBanner" style="display:none;">
-            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <div class="notice-marquee"><p id="noticeText">Loading announcements...</p></div>
+            <div class="badge-sem">CSE / Sem 5</div>
         </div>
 
         <div class="app-body">
             <!-- Dashboard Content -->
             <div id="dash-box">
                 <div class="tab-bar">
-                    <div class="tab-item active" id="studentTabHeader" onclick="switchTab('markTab')">Attendance</div>
-                    <div class="tab-item" id="adminTabHeader" onclick="switchTab('adminTab')">Admin Control</div>
+                    <div class="tab-item" id="studentTabHeader" onclick="switchTab('markTab')">📖 Attendance</div>
+                    <div class="tab-item active" id="adminTabHeader" onclick="switchTab('adminTab')">⚙️ Admin Control</div>
                 </div>
 
                 <!-- Admin Tab -->
-                <div id="adminTab" style="display:none;">
+                <div id="adminTab">
                     <div class="admin-nav">
                         <div class="admin-nav-item" onclick="switchAdminSubTab('subReports')">Excel</div>
                         <div class="admin-nav-item active" onclick="switchAdminSubTab('subAttendance')">Entry</div>
@@ -303,8 +260,11 @@
                     </div>
 
                     <!-- Manual Attendance & Subject Section -->
-                    <div id="subAttendance" class="admin-box tab-content-active">
-                        <span style="font-size:11px; font-weight:800; color:var(--primary); display:block; margin-bottom:8px;">📝 Manual Backdate Attendance</span>
+                    <div id="subAttendance" class="admin-box">
+                        <div class="section-title">
+                            <span>📝 Backdate Attendance Entry</span>
+                        </div>
+                        
                         <input type="text" id="manualRoll" placeholder="Student Roll No (e.g. 24CSE14)">
                         <input type="date" id="manualDate" onchange="loadSubjectsForDay()">
                         <select id="manualStatus">
@@ -312,9 +272,9 @@
                             <option value="Duty Leave">Duty Leave (DL)</option>
                         </select>
                         
-                        <!-- 🔥 Subject Selection Section -->
-                        <div style="margin:10px 0;">
-                            <span style="font-size:10px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">📚 Select Subjects to Mark:</span>
+                        <!-- Subject Selection Box -->
+                        <div style="margin: 12px 0;">
+                            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:8px;">📚 Select Subjects for Day:</span>
                             <div id="subjectCheckboxContainer" class="subject-checkbox-container">
                                 <label class="select-all">
                                     <input type="checkbox" id="selectAllSubjects" onchange="toggleAllSubjects()"> Select All
@@ -322,8 +282,8 @@
                             </div>
                         </div>
 
-                        <div style="display:flex; gap:6px; margin-top:8px;">
-                            <button class="btn btn-primary btn-sm" onclick="markManualAttendanceBulk()" style="flex:2;">Mark Selected Subjects</button>
+                        <div style="display:flex; gap:8px; margin-top:12px;">
+                            <button class="btn btn-primary" onclick="markManualAttendanceBulk()" style="flex:2;">Mark Selected Subjects</button>
                             <button class="btn btn-outline btn-sm" onclick="selectAllSubjects(true)" style="flex:1;">All</button>
                             <button class="btn btn-outline btn-sm" onclick="selectAllSubjects(false)" style="flex:1;">Clear</button>
                         </div>
