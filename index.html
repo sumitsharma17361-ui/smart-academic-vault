@@ -3,354 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMGI Vault - Enterprise ERP Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>BMGI Student Academic Portal & AI Vault</title>
     <style>
-        :root { 
-            --bg-body: #0b1120;
-            --card-bg: #111827;
-            --card-inner: #1f2937;
-            --primary: #4f46e5; 
-            --primary-hover: #4338ca;
-            --accent-purple: #6366f1;
-            --success: #10b981; 
-            --danger: #ef4444; 
-            --warning: #f59e0b; 
-            --border-color: rgba(255, 255, 255, 0.08);
-            --border-card: #2d3748;
-            --text-main: #f3f4f6; 
-            --text-muted: #9ca3af; 
-            --radius: 16px;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
 
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        /* Header / College Portal Navigation */
+        header { background: #1e293b; border-bottom: 1px solid #334155; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { font-size: 24px; }
+        .portal-title h1 { font-size: 18px; color: #f1f5f9; font-weight: 700; }
+        .portal-title p { font-size: 12px; color: #94a3b8; }
+        .user-badge { background: #3b82f6; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+        /* Main Container */
+        .container { max-width: 900px; margin: 20px auto; width: 95%; flex: 1; display: flex; flex-direction: column; gap: 15px; }
+
+        /* Chat Window (Gemini Style) */
+        .chat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; display: flex; flex-direction: column; height: 70vh; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .chat-header { padding: 12px 20px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header h3 { font-size: 15px; color: #60a5fa; display: flex; align-items: center; gap: 8px; }
+        .clear-btn { background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .clear-btn:hover { background: #334155; color: #fff; }
+
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         
-        body { 
-            background-color: var(--bg-body); 
-            color: var(--text-main); 
-            min-height: 100vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            padding: 16px; 
-        }
+        /* Message Bubbles */
+        .message { display: flex; flex-direction: column; max-width: 80%; animation: fadeIn 0.2s ease-in-out; }
+        .message.user { align-self: flex-end; }
+        .message.assistant { align-self: flex-start; }
 
-        /* Vault App Container */
-        .app-container { 
-            width: 100%; 
-            max-width: 480px; 
-            background: var(--card-bg);
-            border-radius: 24px; 
-            border: 1px solid var(--border-card); 
-            overflow: hidden; 
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
+        .bubble { padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        .message.user .bubble { background: #2563eb; color: #ffffff; border-bottom-right-radius: 2px; }
+        .message.assistant .bubble { background: #334155; color: #f1f5f9; border-bottom-left-radius: 2px; border: 1px solid #475569; }
 
-        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 420px; pointer-events: none; }
-        .toast-card { 
-            padding: 12px 16px; 
-            border-radius: 12px; 
-            font-size: 13px; 
-            font-weight: 600; 
-            text-align: center; 
-            background: #1f2937;
-            color: #f3f4f6;
-            border: 1px solid var(--border-card); 
-            display: flex; align-items: center; justify-content: center; gap: 10px; 
-            opacity: 0; transform: translateY(-16px); 
-            transition: all 0.3s ease; 
-            pointer-events: auto; 
-        }
-        .toast-card.show { opacity: 1; transform: translateY(0); }
-        .toast-card.toast-success { background: #064e3b; color: #a7f3d0; border-color: #059669; }
-        .toast-card.toast-error { background: #7f1d1d; color: #fecaca; border-color: #dc2626; }
+        .sender-label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+        .message.user .sender-label { text-align: right; }
 
-        /* Vault Header */
-        .app-header { 
-            background: var(--card-bg); 
-            padding: 18px 20px; 
-            border-bottom: 1px solid var(--border-color); 
-            display: flex; align-items: center; justify-content: space-between; 
-        }
-        .app-header-title { display: flex; align-items: center; gap: 10px; }
-        .app-header-title h1 { font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
-        .app-header-title p { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
-        
-        .badge-sem { 
-            background: rgba(79, 70, 229, 0.2); 
-            color: #818cf8; 
-            border: 1px solid rgba(99, 102, 241, 0.4);
-            padding: 4px 10px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: 700; 
-        }
+        /* Chat Input Area */
+        .chat-input-area { padding: 15px; background: #0f172a; border-top: 1px solid #334155; display: flex; gap: 10px; }
+        .chat-input-area textarea { flex: 1; background: #1e293b; border: 1px solid #475569; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; resize: none; height: 48px; outline: none; }
+        .chat-input-area textarea:focus { border-color: #3b82f6; }
+        .send-btn { background: #2563eb; color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .send-btn:hover { background: #1d4ed8; }
 
-        .app-body { padding: 18px; }
-
-        /* Tab Bar (Vault Navigation) */
-        .tab-bar, .admin-nav { 
-            display: flex; 
-            background: #0f172a; 
-            border-radius: 12px; 
-            padding: 4px; 
-            margin-bottom: 16px; 
-            border: 1px solid var(--border-color); 
-        }
-        .tab-item, .admin-nav-item { 
-            flex: 1; 
-            padding: 10px 6px; 
-            text-align: center; 
-            font-size: 12px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            color: var(--text-muted); 
-            border-radius: 8px; 
-            transition: all 0.2s ease; 
-        }
-        .tab-item.active, .admin-nav-item.active { 
-            background: var(--primary); 
-            color: #ffffff; 
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); 
-        }
-
-        /* Vault Section Cards */
-        .admin-box { 
-            background: var(--card-bg); 
-            border: 1px solid var(--border-card); 
-            border-radius: var(--radius); 
-            padding: 16px; 
-        }
-
-        .section-title {
-            font-size: 13px;
-            font-weight: 800;
-            color: #ffffff;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Inputs & Controls (Dark Theme) */
-        input, select { 
-            width: 100%; 
-            padding: 12px 14px; 
-            margin-bottom: 12px; 
-            background: #1f2937; 
-            border: 1px solid #374151; 
-            border-radius: 10px; 
-            font-size: 12px; 
-            font-weight: 600; 
-            color: #ffffff; 
-            outline: none; 
-            transition: all 0.2s; 
-        }
-        select option { background: #1f2937; color: #ffffff; }
-        input::placeholder { color: #6b7280; }
-        input:focus, select:focus { 
-            border-color: var(--primary); 
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25); 
-        }
-
-        /* Dynamic Subject Checkboxes (Dark Card Grid) */
-        .subject-checkbox-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-            max-height: 180px;
-            overflow-y: auto;
-            padding: 8px;
-            background: #151d2a;
-            border-radius: 10px;
-            border: 1px solid #2d3748;
-        }
-        .subject-checkbox-container label {
-            font-size: 11px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 8px 10px;
-            background: #1f2937;
-            border-radius: 8px;
-            border: 1px solid #374151;
-            color: #e5e7eb;
-            transition: all 0.2s;
-        }
-        .subject-checkbox-container label:hover { 
-            background: #374151; 
-            border-color: var(--primary); 
-        }
-        .subject-checkbox-container label input[type="checkbox"] { 
-            width: auto; 
-            margin: 0; 
-            accent-color: var(--primary);
-        }
-        .subject-checkbox-container .select-all {
-            background: rgba(79, 70, 229, 0.15);
-            border-color: rgba(99, 102, 241, 0.4);
-            color: #a5b4fc;
-            font-weight: 700;
-        }
-
-        /* Action Buttons */
-        .btn { 
-            width: 100%; 
-            padding: 12px 14px; 
-            border-radius: 10px; 
-            font-weight: 700; 
-            font-size: 12px; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            border: none; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px; 
-        }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn:active { transform: scale(0.98); }
-
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-outline { background: #1f2937; border: 1px solid #374151; color: #d1d5db; }
-        .btn-outline:hover { background: #374151; color: white; }
-        .btn-sm { padding: 8px 12px; font-size: 11px; width: auto; }
-
-        .svg-icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div id="toast-container"><div id="toast" class="toast-card"><svg id="toast-icon" class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toast-msg">System Active</span></div></div>
 
-    <div class="app-container">
-        <!-- Vault Header -->
-        <div class="app-header">
-            <div class="app-header-title">
-                <div>
-                    <h1>🎓 BMGI Vault</h1>
-                    <p>BM Group of Institutions</p>
+    <header>
+        <div class="logo-section">
+            <span class="logo-icon">🎓</span>
+            <div class="portal-title">
+                <h1>BMGI Vault Portal</h1>
+                <p>BM Group of Institutions • Computer Science Dept.</p>
+            </div>
+        </div>
+        <div class="user-badge">CSE / Sem 5</div>
+    </header>
+
+    <div class="container">
+        <div class="chat-card">
+            <div class="chat-header">
+                <h3>🧠 Grok AI Tutor</h3>
+                <button class="clear-btn" onclick="clearMemory()">Reset Chat</button>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <span class="sender-label">BMGI AI Assistant</span>
+                    <div class="bubble">Hello! I am your AI Academic Assistant. Ask me anything about your Semester 5 subjects, code debugging, or exam preparations!</div>
                 </div>
             </div>
-            <div class="badge-sem">CSE / Sem 5</div>
-        </div>
 
-        <div class="app-body">
-            <!-- Dashboard Content -->
-            <div id="dash-box">
-                <div class="tab-bar">
-                    <div class="tab-item" id="studentTabHeader" onclick="switchTab('markTab')">📖 Attendance</div>
-                    <div class="tab-item active" id="adminTabHeader" onclick="switchTab('adminTab')">⚙️ Admin Control</div>
-                </div>
-
-                <!-- Admin Tab -->
-                <div id="adminTab">
-                    <div class="admin-nav">
-                        <div class="admin-nav-item" onclick="switchAdminSubTab('subReports')">Excel</div>
-                        <div class="admin-nav-item active" onclick="switchAdminSubTab('subAttendance')">Entry</div>
-                        <div class="admin-nav-item" onclick="switchAdminSubTab('subHoliday')">Holiday</div>
-                        <div class="admin-nav-item" onclick="switchAdminSubTab('subQR')">QR</div>
-                        <div class="admin-nav-item" onclick="switchAdminSubTab('subTools')">Tools</div>
-                    </div>
-
-                    <!-- Manual Attendance & Subject Section -->
-                    <div id="subAttendance" class="admin-box">
-                        <div class="section-title">
-                            <span>📝 Backdate Attendance Entry</span>
-                        </div>
-                        
-                        <input type="text" id="manualRoll" placeholder="Student Roll No (e.g. 24CSE14)">
-                        <input type="date" id="manualDate" onchange="loadSubjectsForDay()">
-                        <select id="manualStatus">
-                            <option value="Present">Present</option>
-                            <option value="Duty Leave">Duty Leave (DL)</option>
-                        </select>
-                        
-                        <!-- Subject Selection Box -->
-                        <div style="margin: 12px 0;">
-                            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:8px;">📚 Select Subjects for Day:</span>
-                            <div id="subjectCheckboxContainer" class="subject-checkbox-container">
-                                <label class="select-all">
-                                    <input type="checkbox" id="selectAllSubjects" onchange="toggleAllSubjects()"> Select All
-                                </label>
-                            </div>
-                        </div>
-
-                        <div style="display:flex; gap:8px; margin-top:12px;">
-                            <button class="btn btn-primary" onclick="markManualAttendanceBulk()" style="flex:2;">Mark Selected Subjects</button>
-                            <button class="btn btn-outline btn-sm" onclick="selectAllSubjects(true)" style="flex:1;">All</button>
-                            <button class="btn btn-outline btn-sm" onclick="selectAllSubjects(false)" style="flex:1;">Clear</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="chat-input-area">
+                <textarea id="userInput" placeholder="Ask a question..." onkeydown="handleKeyPress(event)"></textarea>
+                <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Dynamic Timetable per Day
-        function loadSubjectsForDay() {
-            const date = document.getElementById('manualDate').value;
-            if (!date) return;
-            const parts = date.split('-');
-            const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const dayName = days[dateObj.getDay()];
+        // Store conversation memory array
+        let chatHistory = [];
+        const BACKEND_URL = "https://smart-academic-vault.onrender.com/api/ai-assistant"; // Replace with your actual Render URL if different
+
+        function appendMessage(role, text) {
+            const chatContainer = document.getElementById("chatMessages");
             
-            const timetable = {
-                'Monday': ['BDA - Big Data Analytics', 'ECO - Economics for Engineers', 'DAA - Design & Analysis of Algorithm', 'FLA - Formal Language & Automata', 'HRM - Human Resource Mgmt', 'CN - Computer Network', 'WT - Web Technology'],
-                'Tuesday': ['WT - Web Technology', 'ECO - Economics for Engineers', 'Internet Lab (Ms. Geeta)', 'FLA - Formal Language & Automata', 'HRM - Human Resource Mgmt', 'BDA - Big Data Analytics'],
-                'Wednesday': ['BDA - Big Data Analytics', 'ECO - Economics for Engineers', 'FLA - Formal Language & Automata', 'WT - Web Technology', 'CN LAB - Computer Network Lab'],
-                'Thursday': ['BDA - Big Data Analytics', 'WT - Web Technology', 'CN - Computer Network', 'DAA - Design & Analysis of Algorithm', 'DAA LAB - Algorithm Lab', 'HRM - Human Resource Mgmt'],
-                'Friday': ['DAA - Design & Analysis of Algorithm', 'CN - Computer Network', 'FLA - Formal Language & Automata', 'BDA - Big Data Analytics', 'WT LAB - Web Technology Lab']
-            };
-            
-            const subjects = timetable[dayName] || ['General Class / Activity'];
-            const container = document.getElementById('subjectCheckboxContainer');
-            container.innerHTML = `
-                <label class="select-all">
-                    <input type="checkbox" id="selectAllSubjects" onchange="toggleAllSubjects()"> Select All (${subjects.length} Subjects)
-                </label>
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `message ${role}`;
+
+            const label = document.createElement("span");
+            label.className = "sender-label";
+            label.innerText = role === "user" ? "You" : "BMGI AI Assistant";
+
+            const bubble = document.createElement("div");
+            bubble.className = "bubble";
+            bubble.innerText = text;
+
+            msgDiv.appendChild(label);
+            msgDiv.appendChild(bubble);
+            chatContainer.appendChild(msgDiv);
+
+            // Auto-scroll to bottom like Gemini
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const inputElem = document.getElementById("userInput");
+            const prompt = inputElem.value.trim();
+
+            if (!prompt) return;
+
+            // 1. Show User message & clear input immediately
+            appendMessage("user", prompt);
+            inputElem.value = "";
+
+            // 2. Add user prompt to conversation memory
+            chatHistory.push({ role: "user", content: prompt });
+
+            // 3. Temporary Loading state
+            const loadingText = "Typing...";
+            appendMessage("assistant", loadingText);
+            const chatContainer = document.getElementById("chatMessages");
+            const loadingElem = chatContainer.lastElementChild;
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        history: chatHistory
+                    })
+                });
+
+                const data = await response.json();
+                const aiReply = data.result || "Could not retrieve answer.";
+
+                // Update Loading message with real response
+                loadingElem.querySelector(".bubble").innerText = aiReply;
+
+                // Add assistant reply to memory
+                chatHistory.push({ role: "assistant", content: aiReply });
+
+            } catch (err) {
+                loadingElem.querySelector(".bubble").innerText = "Error connecting to server. Please try again.";
+            }
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function clearMemory() {
+            chatHistory = [];
+            document.getElementById("chatMessages").innerHTML = `
+                <div class="message assistant">
+                    <span class="sender-label">BMGI AI Assistant</span>
+                    <div class="bubble">Chat history cleared! What would you like to discuss next?</div>
+                </div>
             `;
-            subjects.forEach(sub => {
-                container.innerHTML += `
-                    <label>
-                        <input type="checkbox" class="subject-checkbox" value="${sub}"> ${sub}
-                    </label>
-                `;
-            });
         }
-
-        function toggleAllSubjects() {
-            const master = document.getElementById('selectAllSubjects');
-            const checkboxes = document.querySelectorAll('.subject-checkbox');
-            checkboxes.forEach(cb => cb.checked = master.checked);
-        }
-
-        function selectAllSubjects(select) {
-            const checkboxes = document.querySelectorAll('.subject-checkbox');
-            checkboxes.forEach(cb => cb.checked = select);
-            const master = document.getElementById('selectAllSubjects');
-            if (master) master.checked = select;
-        }
-
-        function switchTab(tabId) {
-            document.getElementById('adminTab').style.display = tabId === 'adminTab' ? 'block' : 'none';
-        }
-
-        function switchAdminSubTab(subId) {
-            document.getElementById('subAttendance').style.display = subId === 'subAttendance' ? 'block' : 'none';
-        }
-
-        // Set default date to today and load subjects
-        document.getElementById('manualDate').value = new Date().toISOString().split('T')[0];
-        loadSubjectsForDay();
     </script>
 </body>
 </html>
