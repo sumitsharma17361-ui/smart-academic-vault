@@ -36,7 +36,7 @@ app.get('/api/notes', (req, res) => {
     ]);
 });
 
-// Real Grok API Endpoint Call
+// Real Grok API Endpoint Call with Auto Model Detection
 app.post('/api/ai-assistant', async (req, res) => {
     const { prompt } = req.body;
 
@@ -48,11 +48,27 @@ app.post('/api/ai-assistant', async (req, res) => {
 
     if (!GROK_API_KEY) {
         return res.json({
-            result: `🤖 **[System Mode]**\n\nAapka Question: "${prompt}"\n\n*(Note: Grok API Key Render me set nahi hai.)*`
+            result: `🤖 **[System Mode]**\n\nAapka Question: "${prompt}"\n\n*(Note: Grok API Key Render environment variables mein add nahi hai.)*`
         });
     }
 
     try {
+        // Step 1: Fetch Available Models from xAI
+        let activeModel = "grok-2";
+        const modelsResponse = await fetch("https://api.x.ai/v1/models", {
+            headers: { "Authorization": `Bearer ${GROK_API_KEY}` }
+        });
+        
+        if (modelsResponse.ok) {
+            const modelsData = await modelsResponse.json();
+            if (modelsData.data && modelsData.data.length > 0) {
+                // Select the first valid model returned by xAI for your API key
+                activeModel = modelsData.data[0].id;
+                console.log("Using active xAI model:", activeModel);
+            }
+        }
+
+        // Step 2: Send Completion Request using detected model
         const response = await fetch("https://api.x.ai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -60,7 +76,7 @@ app.post('/api/ai-assistant', async (req, res) => {
                 "Authorization": `Bearer ${GROK_API_KEY}`
             },
             body: JSON.stringify({
-                model: "grok-2-latest", // Updated to official model name
+                model: activeModel,
                 messages: [
                     { role: "system", content: "You are a helpful academic AI tutor for Computer Science students at BM Group of Institutions (BMGI)." },
                     { role: "user", content: prompt }
@@ -74,7 +90,7 @@ app.post('/api/ai-assistant', async (req, res) => {
         if (data.choices && data.choices[0] && data.choices[0].message) {
             res.json({ result: data.choices[0].message.content });
         } else {
-            res.json({ result: "Grok API response error: " + JSON.stringify(data) });
+            res.json({ result: "Grok API Response Error: " + (data.error?.message || JSON.stringify(data)) });
         }
     } catch (err) {
         console.error("Grok API Error:", err);
