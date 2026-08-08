@@ -9,7 +9,7 @@ app.use(express.json());
 
 // Root test route
 app.get('/', (req, res) => {
-    res.send("BMGI Academic Vault & Grok Backend Running!");
+    res.send("BMGI Academic Vault Backend Running!");
 });
 
 // Semester 5 Sample Notes Route
@@ -36,7 +36,7 @@ app.get('/api/notes', (req, res) => {
     ]);
 });
 
-// Real Grok API Endpoint Call with Auto Model Detection
+// Smart Multi-AI Endpoint
 app.post('/api/ai-assistant', async (req, res) => {
     const { prompt } = req.body;
 
@@ -46,55 +46,46 @@ app.post('/api/ai-assistant', async (req, res) => {
 
     const GROK_API_KEY = process.env.GROK_API_KEY;
 
-    if (!GROK_API_KEY) {
-        return res.json({
-            result: `🤖 **[System Mode]**\n\nAapka Question: "${prompt}"\n\n*(Note: Grok API Key Render environment variables mein add nahi hai.)*`
-        });
-    }
+    // List of model names xAI supports across different tiers
+    const possibleModels = ["grok-2-1212", "grok-beta", "grok-vision-beta", "grok-1"];
 
-    try {
-        // Step 1: Fetch Available Models from xAI
-        let activeModel = "grok-2";
-        const modelsResponse = await fetch("https://api.x.ai/v1/models", {
-            headers: { "Authorization": `Bearer ${GROK_API_KEY}` }
-        });
-        
-        if (modelsResponse.ok) {
-            const modelsData = await modelsResponse.json();
-            if (modelsData.data && modelsData.data.length > 0) {
-                // Select the first valid model returned by xAI for your API key
-                activeModel = modelsData.data[0].id;
-                console.log("Using active xAI model:", activeModel);
+    if (GROK_API_KEY) {
+        for (let modelName of possibleModels) {
+            try {
+                const response = await fetch("https://api.x.ai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${GROK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: [
+                            { role: "system", content: "You are an expert Computer Science academic AI tutor for BM Group of Institutions (BMGI)." },
+                            { role: "user", content: prompt }
+                        ],
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    return res.json({ result: data.choices[0].message.content });
+                }
+            } catch (err) {
+                console.log(`Failed model ${modelName}, trying next...`);
             }
         }
+    }
 
-        // Step 2: Send Completion Request using detected model
-        const response = await fetch("https://api.x.ai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${GROK_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: activeModel,
-                messages: [
-                    { role: "system", content: "You are a helpful academic AI tutor for Computer Science students at BM Group of Institutions (BMGI)." },
-                    { role: "user", content: prompt }
-                ],
-                temperature: 0.7
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-            res.json({ result: data.choices[0].message.content });
-        } else {
-            res.json({ result: "Grok API Response Error: " + (data.error?.message || JSON.stringify(data)) });
-        }
-    } catch (err) {
-        console.error("Grok API Error:", err);
-        res.status(500).json({ result: "Server error while contacting Grok API." });
+    // High Quality Free AI Backup (In case Grok API key is invalid or model restricted)
+    try {
+        const backupAI = await fetch(`https://text.pollinations.ai/${encodeURIComponent("You are BMGI Academic AI Tutor. Answer this clearly for Semester 5 CSE student: " + prompt)}`);
+        const textResult = await backupAI.text();
+        return res.json({ result: textResult });
+    } catch (fallbackErr) {
+        return res.status(500).json({ result: "AI service currently busy. Please try again in a moment." });
     }
 });
 
