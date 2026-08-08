@@ -36,23 +36,37 @@ app.get('/api/notes', (req, res) => {
     ]);
 });
 
-// Super-fast Groq AI Assistant Endpoint
+// Super-fast Groq AI Assistant Endpoint with Conversation Memory
 app.post('/api/ai-assistant', async (req, res) => {
-    const { prompt } = req.body;
+    const { prompt, history } = req.body;
 
-    if (!prompt) {
-        return res.status(400).json({ error: "Prompt is required" });
+    if (!prompt && (!history || history.length === 0)) {
+        return res.status(400).json({ error: "Prompt or message history is required" });
     }
 
     const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
     if (!GROQ_API_KEY) {
         return res.json({
-            result: `🤖 **[System Mode]**\n\nAapka Question: "${prompt}"\n\n*(Note: Groq API Key Render par set nahi hai.)*`
+            result: `🤖 **[System Mode]**\n\n*(Note: Groq API Key is missing on Render settings.)*`
         });
     }
 
     try {
+        // Construct chat messages array with system prompt + history + current prompt
+        let conversationMessages = [
+            { 
+                role: "system", 
+                content: "You are an expert academic AI tutor for Computer Science students at BM Group of Institutions (BMGI). Provide clear, concise, and helpful answers. Remember user details and conversation context provided in previous turns." 
+            }
+        ];
+
+        if (Array.isArray(history) && history.length > 0) {
+            conversationMessages = conversationMessages.concat(history);
+        } else if (prompt) {
+            conversationMessages.push({ role: "user", content: prompt });
+        }
+
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -61,13 +75,7 @@ app.post('/api/ai-assistant', async (req, res) => {
             },
             body: JSON.stringify({
                 model: "llama-3.1-8b-instant",
-                messages: [
-                    { 
-                        role: "system", 
-                        content: "You are an expert academic AI tutor for Computer Science (Semester 5) students at BM Group of Institutions (BMGI). Provide clear, concise, and structured answers." 
-                    },
-                    { role: "user", content: prompt }
-                ],
+                messages: conversationMessages,
                 temperature: 0.7
             })
         });
