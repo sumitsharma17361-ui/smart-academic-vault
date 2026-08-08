@@ -3,80 +3,438 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMGI Academic Vault & Grok AI</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>BMGI Vault - Notes & AI Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg-body: #0b1120;
+            --card-bg: #111827;
+            --card-inner: #1f2937;
+            --primary: #4f46e5; 
+            --primary-hover: #4338ca;
+            --gemini-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-card: #2d3748;
+            --text-main: #f3f4f6; 
+            --text-muted: #9ca3af; 
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 16px; 
+        }
+
+        .app-container { 
+            width: 100%; 
+            max-width: 480px; 
+            background: var(--card-bg);
+            border-radius: 24px; 
+            border: 1px solid var(--border-card); 
+            overflow: hidden; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Vault Header */
+        .app-header { 
+            background: var(--card-bg); 
+            padding: 18px 20px; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; align-items: center; justify-content: space-between; 
+        }
+        .app-header-title h1 { font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+        .app-header-title p { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
+        
+        .badge-sem { 
+            background: rgba(79, 70, 229, 0.2); 
+            color: #818cf8; 
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+        }
+
+        .app-body { padding: 18px; }
+
+        /* Main Tabs */
+        .main-tab-bar { 
+            display: flex; 
+            background: #0f172a; 
+            border-radius: 12px; 
+            padding: 4px; 
+            margin-bottom: 16px; 
+            border: 1px solid var(--border-color); 
+        }
+        .main-tab-item { 
+            flex: 1; 
+            padding: 10px 4px; 
+            text-align: center; 
+            font-size: 12px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            color: var(--text-muted); 
+            border-radius: 8px; 
+            transition: all 0.2s ease; 
+        }
+        .main-tab-item.active { 
+            background: var(--primary); 
+            color: #ffffff; 
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); 
+        }
+        .main-tab-item.gemini-tab.active {
+            background: var(--gemini-gradient);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+        }
+
+        /* Inputs & Search */
+        input, select { 
+            width: 100%; 
+            padding: 12px 14px; 
+            background: #1f2937; 
+            border: 1px solid #374151; 
+            border-radius: 10px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: #ffffff; 
+            outline: none; 
+            transition: all 0.2s; 
+        }
+        select option { background: #1f2937; color: #ffffff; }
+        input::placeholder { color: #6b7280; }
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25); 
+        }
+
+        /* Notes Vault UI */
+        .notes-filter-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+        .notes-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+        .note-card {
+            background: var(--card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+        .note-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+        .note-info { display: flex; flex-direction: column; gap: 3px; }
+        .note-subject { font-size: 10px; font-weight: 800; color: #818cf8; text-transform: uppercase; }
+        .note-title { font-size: 12px; font-weight: 700; color: #ffffff; }
+        .note-meta { font-size: 10px; color: var(--text-muted); }
+
+        /* Gemini AI UI */
+        .ai-container {
+            background: #0f172a;
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 430px;
+        }
+        .ai-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+        .ai-badge {
+            background: var(--gemini-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 13px;
+        }
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 4px;
+            margin-bottom: 10px;
+        }
+        .msg {
+            max-width: 85%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+        .msg.user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: #ffffff;
+            border-bottom-right-radius: 2px;
+        }
+        .msg.ai {
+            align-self: flex-start;
+            background: var(--card-inner);
+            color: #e5e7eb;
+            border: 1px solid var(--border-card);
+            border-bottom-left-radius: 2px;
+        }
+        .ai-input-box { display: flex; gap: 8px; }
+        .ai-input-box input { margin-bottom: 0; flex: 1; }
+
+        /* Buttons */
+        .btn { 
+            padding: 10px 14px; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            border: none; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-gemini { background: var(--gemini-gradient); color: white; }
+        .btn-outline { background: #1f2937; border: 1px solid #374151; color: #d1d5db; }
+        .btn-sm { padding: 6px 10px; font-size: 10px; }
+
+        /* Modal Overlay */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: var(--card-bg); width: 90%; max-width: 440px; border-radius: 16px;
+            padding: 16px; border: 1px solid var(--border-card);
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
+<body>
 
-    <!-- Header -->
-    <header class="bg-gray-800 p-4 border-b border-gray-700 sticky top-0 z-50 flex justify-between items-center">
-        <div>
-            <h1 class="text-lg font-bold text-indigo-400"><i class="fa-solid fa-graduation-cap mr-2"></i>BMGI Vault</h1>
-            <p class="text-[10px] text-gray-400">BM Group of Institutions</p>
+    <div class="app-container">
+        <!-- Vault Header -->
+        <div class="app-header">
+            <div class="app-header-title">
+                <div>
+                    <h1>📚 BMGI Vault</h1>
+                    <p>Academic Resource Repository</p>
+                </div>
+            </div>
+            <div class="badge-sem">CSE Dept</div>
         </div>
-        <span class="text-xs bg-indigo-600 px-2.5 py-1 rounded-full font-semibold">CSE / Sem 5</span>
-    </header>
 
-    <!-- Navigation Tabs -->
-    <div class="flex border-b border-gray-800 bg-gray-800/50">
-        <button id="tab-vault" onclick="switchTab('vault')" class="flex-1 py-3 text-center border-b-2 border-indigo-500 font-semibold text-indigo-400">
-            <i class="fa-solid fa-book-open mr-1"></i> Notes Vault
-        </button>
-        <button id="tab-ai" onclick="switchTab('ai')" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-400">
-            <i class="fa-solid fa-robot mr-1"></i> Grok AI
-        </button>
+        <div class="app-body">
+            <!-- Main Navigation Tabs -->
+            <div class="main-tab-bar">
+                <div class="main-tab-item active" id="btnTabNotes" onclick="switchMainTab('notesTab')">📖 Notes Repository</div>
+                <div class="main-tab-item gemini-tab" id="btnTabAi" onclick="switchMainTab('aiTab')">✨ Gemini AI Assistant</div>
+            </div>
+
+            <!-- 1. NOTES VAULT SECTION -->
+            <div id="notesTab">
+                <div class="notes-filter-bar">
+                    <input type="text" id="notesSearch" placeholder="Search notes or keywords..." onkeyup="filterNotes()">
+                    <select id="notesSubjectFilter" style="width: 130px;" onchange="filterNotes()">
+                        <option value="ALL">All Subjects</option>
+                        <option value="BDA">BDA</option>
+                        <option value="DAA">DAA</option>
+                        <option value="CN">CN</option>
+                        <option value="FLA">FLA</option>
+                        <option value="WT">WT</option>
+                    </select>
+                </div>
+
+                <div class="notes-list" id="notesListContainer">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+
+            <!-- 2. ADVANCED GEMINI AI ASSISTANT -->
+            <div id="aiTab" style="display: none;">
+                <div class="ai-container">
+                    <div class="ai-header">
+                        <span class="ai-badge">✦ Gemini Academic AI</span>
+                        <button class="btn btn-outline btn-sm" onclick="clearMemory()">Clear Context</button>
+                    </div>
+
+                    <!-- Chat History Container -->
+                    <div class="chat-history" id="chatHistory">
+                        <div class="msg ai">
+                            Namaste! Main aapka <b>BMGI Vault AI Assistant</b> hoon. 
+                            Aap mujhse kisi bhi subject ke notes khojne, concepts samajhne ya syllabus ke bare me pooch sakte hain.
+                        </div>
+                    </div>
+
+                    <div class="ai-input-box">
+                        <input type="text" id="aiInput" placeholder="Ask AI (e.g. Find DAA Notes or explain BDA)..." onkeypress="handleAiKeyPress(event)">
+                        <button class="btn btn-gemini" onclick="sendAiMessage()">Ask</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <!-- Main Content Area -->
-    <main class="p-4 max-w-2xl mx-auto">
-
-        <!-- Vault Section -->
-        <section id="vault-section" class="space-y-4">
-            <!-- Filter Options for Semester 5 Subjects -->
-            <div class="flex gap-2">
-                <select id="subject-filter" class="bg-gray-800 border border-gray-700 p-2 rounded-lg flex-1 text-sm text-gray-200">
-                    <option value="all">All Semester 5 Subjects</option>
-                    <option value="cn">Computer Networks</option>
-                    <option value="se">Software Engineering</option>
-                    <option value="wt">Web Technologies</option>
-                    <option value="toc">Theory of Computation</option>
-                </select>
-                <button onclick="fetchNotes()" class="bg-indigo-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Filter</button>
+    <!-- PDF Viewer Modal -->
+    <div class="modal" id="pdfModal">
+        <div class="modal-content">
+            <h3 id="modalTitle" style="font-size:14px; margin-bottom:8px; color:#fff;">Document Viewer</h3>
+            <p id="modalBody" style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Previewing document...</p>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
+                <button class="btn btn-primary btn-sm" onclick="downloadPdf()">Download PDF</button>
             </div>
+        </div>
+    </div>
 
-            <!-- Notes List Container -->
-            <div id="notes-container" class="space-y-3">
-                <p class="text-xs text-gray-400 text-center py-4">Loading BMGI Semester 5 Notes...</p>
-            </div>
-        </section>
+    <script>
+        /* ================= 1. NOTES DATABASE & CONTROLLER ================= */
+        const notesDatabase = [
+            { id: 1, code: 'BDA', title: 'Big Data Analytics - Complete Unit 1 & 2 Notes', author: 'CSE Faculty', file: 'BDA_Unit1_2.pdf', size: '2.8 MB' },
+            { id: 2, code: 'DAA', title: 'Design & Analysis of Algorithms Handcrafted Notes', author: 'Dr. Sharma', file: 'DAA_Complete.pdf', size: '4.5 MB' },
+            { id: 3, code: 'CN', title: 'Computer Networks TCP/IP & OSI Reference Models', author: 'Network Lab', file: 'CN_Models.pdf', size: '1.9 MB' },
+            { id: 4, code: 'FLA', title: 'Formal Language & Automata Theory - Pushdown Automata', author: 'Theory Team', file: 'FLA_PDA.pdf', size: '3.1 MB' },
+            { id: 5, code: 'WT', title: 'Web Technology - Full Stack Cheatsheet & Lab Manual', author: 'Tech Club', file: 'WT_Full_Guide.pdf', size: '5.0 MB' }
+        ];
 
-        <!-- AI Assistant Section -->
-        <section id="ai-section" class="hidden space-y-4">
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                <h2 class="font-bold text-lg mb-1 text-indigo-400 flex items-center gap-2">
-                    <i class="fa-solid fa-brain"></i> Grok Academic AI
-                </h2>
-                <p class="text-xs text-gray-400 mb-4">BMGI Students: Ask any Semester 5 syllabus question or code debug query.</p>
-                
-                <textarea id="ai-input" class="w-full bg-gray-900 border border-gray-700 p-3 rounded-lg text-sm focus:outline-none focus:border-indigo-500 h-28" placeholder="Type your academic query (e.g., Explain TCP/IP vs OSI model)..."></textarea>
-                
-                <button onclick="askAI()" id="ai-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 py-2.5 rounded-lg font-semibold mt-3 text-sm flex justify-center items-center gap-2">
-                    <span>Ask Grok AI</span>
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </div>
+        function renderNotes(data) {
+            const container = document.getElementById('notesListContainer');
+            container.innerHTML = '';
+            if (data.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px;">No study materials found matching query.</div>`;
+                return;
+            }
+            data.forEach(note => {
+                container.innerHTML += `
+                    <div class="note-card">
+                        <div class="note-info">
+                            <span class="note-subject">${note.code}</span>
+                            <span class="note-title">${note.title}</span>
+                            <span class="note-meta">${note.author} • ${note.size}</span>
+                        </div>
+                        <button class="btn btn-outline btn-sm" onclick="openPdfModal('${note.title}')">👁️ View</button>
+                    </div>
+                `;
+            });
+        }
 
-            <!-- AI Response Display Box -->
-            <div id="ai-output" class="hidden bg-gray-800/80 p-4 rounded-xl border border-indigo-500/30 space-y-2">
-                <h3 class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Grok AI Response:</h3>
-                <div id="ai-response-text" class="text-sm text-gray-200 leading-relaxed whitespace-pre-line"></div>
-            </div>
-        </section>
+        function filterNotes() {
+            const search = document.getElementById('notesSearch').value.toLowerCase();
+            const subject = document.getElementById('notesSubjectFilter').value;
 
-    </main>
+            const filtered = notesDatabase.filter(note => {
+                const matchesSearch = note.title.toLowerCase().includes(search) || note.code.toLowerCase().includes(search);
+                const matchesSubject = subject === 'ALL' || note.code === subject;
+                return matchesSearch && matchesSubject;
+            });
+            renderNotes(filtered);
+        }
 
-    <script src="app.js"></script>
+        function openPdfModal(title) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerText = `Document ready for view/download: "${title}".`;
+            document.getElementById('pdfModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+        }
+
+        function downloadPdf() {
+            alert('Downloading document...');
+            closeModal();
+        }
+
+        /* ================= 2. GEMINI AI ENGINE WITH CONTEXTUAL MEMORY ================= */
+        let aiMemory = [];
+
+        function handleAiKeyPress(e) {
+            if (e.key === 'Enter') sendAiMessage();
+        }
+
+        function sendAiMessage() {
+            const inputEl = document.getElementById('aiInput');
+            const userMsg = inputEl.value.trim();
+            if (!userMsg) return;
+
+            // Save and render user prompt
+            appendChatMessage(userMsg, 'user');
+            aiMemory.push({ role: "user", text: userMsg });
+            inputEl.value = '';
+
+            // AI Processing simulation
+            setTimeout(() => {
+                const aiResponse = generateGeminiResponse(userMsg);
+                appendChatMessage(aiResponse, 'ai');
+                aiMemory.push({ role: "model", text: aiResponse });
+            }, 500);
+        }
+
+        function appendChatMessage(msg, sender) {
+            const chatBox = document.getElementById('chatHistory');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${sender}`;
+            msgDiv.innerHTML = msg;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function generateGeminiResponse(input) {
+            const text = input.toLowerCase();
+
+            // Function Calling / Action Triggering Simulation
+            if (text.includes('note') || text.includes('bda') || text.includes('daa') || text.includes('cn') || text.includes('fla') || text.includes('wt')) {
+                let foundSubject = 'ALL';
+                if (text.includes('bda')) foundSubject = 'BDA';
+                else if (text.includes('daa')) foundSubject = 'DAA';
+                else if (text.includes('cn')) foundSubject = 'CN';
+                else if (text.includes('fla')) foundSubject = 'FLA';
+                else if (text.includes('wt')) foundSubject = 'WT';
+
+                // Automatically switch to Notes Vault & filter
+                switchMainTab('notesTab');
+                document.getElementById('notesSubjectFilter').value = foundSubject;
+                filterNotes();
+
+                return `📂 Main aapko **Notes Repository** me redirect kar raha hoon. Filter applied: <b>${foundSubject}</b>.`;
+            }
+
+            if (text.includes('hello') || text.includes('hi')) {
+                return `Hello! Main Gemini AI Assistant hoon. Main aapke academic materials ko search karne me help kar sakta hoon.`;
+            }
+
+            return `Maine aapki request process kar li hai (${aiMemory.length} messages in memory context). Aap specific subjects like BDA, DAA, CN ke notes search karne ke liye keh sakte hain!`;
+        }
+
+        function clearMemory() {
+            aiMemory = [];
+            document.getElementById('chatHistory').innerHTML = `<div class="msg ai">Memory reset done! How can I help you?</div>`;
+        }
+
+        /* ================= 3. NAVIGATION CONTROLLER ================= */
+        function switchMainTab(tabId) {
+            document.getElementById('notesTab').style.display = tabId === 'notesTab' ? 'block' : 'none';
+            document.getElementById('aiTab').style.display = tabId === 'aiTab' ? 'block' : 'none';
+
+            document.getElementById('btnTabNotes').classList.toggle('active', tabId === 'notesTab');
+            document.getElementById('btnTabAi').classList.toggle('active', tabId === 'aiTab');
+        }
+
+        // Initialize App
+        renderNotes(notesDatabase);
+    </script>
 </body>
 </html>
